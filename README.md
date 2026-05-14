@@ -1,6 +1,6 @@
 # redutzu-breach
 
-A standalone two-phase network breach minigame for FiveM. Built for hacking cameras in [redutzu-mdt](https://mdt.redutzu.com/) — works with any framework or no framework at all. Trigger it via exports, get the result in a callback or promise.
+A standalone two-phase network breach minigame for FiveM. Built for hacking cameras in [redutzu-mdt](https://mdt.redutzu.com/) — works with any framework or no framework at all. Trigger it via exports, get the result in a callback.
 
 **Phase 1 — Port Knock:** click the correct hex ports in sequence before honeypots rotate in and burn a life.  
 **Phase 2 — Carrier Wave Sync:** tune four sliders until your waveform overlaps the target, then engage the lock.
@@ -128,48 +128,43 @@ end
 
 ### Server-side export
 
-Use when the trigger comes from the server — job check, cooldown gate, callback, etc.
+Use when the trigger comes from the server — job check, cooldown gate, etc.
 
 ```lua
--- Promise form (use Citizen.Await to block until done)
-local result = Citizen.Await(exports['redutzu-breach']:StartMinigame(source, config))
-
--- Callback form (pass a function as the third argument)
+-- Callback form
 exports['redutzu-breach']:StartMinigame(source, config, function(result) end)
 
 -- Force-close the minigame on a specific client
 exports['redutzu-breach']:CloseMinigame(source)
 ```
 
-Both forms handle disconnect automatically — the callback/promise fires with `{ success = false, reason = 'disconnected', elapsed = 0 }` if the player drops mid-game.
+The callback fires with `{ success = false, reason = 'disconnected', elapsed = 0 }` if the player drops mid-game.
 
-**Promise example:**
+> **Note:** The export returns no value. Promise/`Citizen.Await` does not work across resource boundaries in FiveM — if you need to block until the result arrives, create a local promise and resolve it inside the callback:
+>
+> ```lua
+> local p = promise.new()
+> exports['redutzu-breach']:StartMinigame(source, config, function(result)
+>     p:resolve(result)
+> end)
+> local result = Citizen.Await(p)
+> ```
+
+**Example:**
 
 ```lua
-lib.callback.register('mdt:startCameraHack', function(source, camId, camIp)
-    -- your own gates go here (distance check, job check, cooldown, etc.)
-
-    local minigame = exports['redutzu-breach']:StartMinigame(source, {
-        id = camId,
-        ip = camIp,
-    })
-
-    local result = Citizen.Await(minigame)
-
-    if not result.success then return false end
-
+exports['redutzu-breach']:StartMinigame(source, {
+    id = camId,
+    ip = camIp,
+    lives = 1,
+    totalTime = 50,
+    seqLen = 6,
+    honeypots = 5,
+    honeyInterval = 400,
+    lockThreshold = 95,
+}, function(result)
+    if not result.success then return end
     print(('Player %s hacked %s — %.1f%% sync in %ds'):format(source, camId, result.match or 0, result.elapsed))
-    return true
-end)
-```
-
-**Callback example:**
-
-```lua
-exports['redutzu-breach']:StartMinigame(source, { id = camId, ip = camIp }, function(result)
-    if result.success then
-        -- grant access, update database, etc.
-    end
 end)
 ```
 
@@ -177,7 +172,7 @@ end)
 
 ### Server event (alternative)
 
-If you prefer events over promises, listen for this instead (fires simultaneously with the promise resolving):
+If you prefer events over exports, listen for this instead (fires simultaneously with the callback):
 
 ```lua
 AddEventHandler('redutzu-minigame:result', function(source, result)
@@ -238,7 +233,7 @@ redutzu-breach/
 ├── client/
 │   └── main.lua          -- NUI bridge, exports, death/resource-stop handlers
 ├── server/
-│   └── main.lua          -- promise-based server export, result routing
+│   └── main.lua          -- callback-based server export, result routing
 ├── nui/
 │   ├── src/              -- React/TypeScript source
 │   ├── dist/             -- pre-built output (what FiveM loads)

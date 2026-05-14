@@ -1,26 +1,15 @@
 local pending = {}
 
 local function resolve(src, result)
-    local entry = pending[src]
-    if not entry then return end
+    local fn = pending[src]
+    if not fn then return end
     pending[src] = nil
-    if entry.type == 'promise' then
-        entry.p:resolve(result)
-    else
-        entry.fn(result)
-    end
+    fn(result)
 end
 
 exports('StartMinigame', function(source, config, callback)
-    if callback then
-        pending[source] = { type = 'callback', fn = callback }
-        TriggerClientEvent('redutzu-minigame:client:start', source, config or {})
-    else
-        local p = promise.new()
-        pending[source] = { type = 'promise', p = p }
-        TriggerClientEvent('redutzu-minigame:client:start', source, config or {})
-        return p
-    end
+    pending[source] = callback
+    TriggerClientEvent('redutzu-minigame:client:start', source, config or {})
 end)
 
 exports('CloseMinigame', function(source)
