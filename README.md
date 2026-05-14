@@ -5,8 +5,8 @@ A standalone two-phase network breach minigame for FiveM. Built for hacking came
 **Phase 1 — Port Knock:** click the correct hex ports in sequence before honeypots rotate in and burn a life.  
 **Phase 2 — Carrier Wave Sync:** tune four sliders until your waveform overlaps the target, then engage the lock.
 
-![Phase 1 — Port Knock][https://i.imgur.com/Xsl7Nnw.png]
-![Phase 2 — Carrier Wave Sync][https://i.imgur.com/jig2UtH.png]
+![Phase 1 — Port Knock](https://i.imgur.com/Xsl7Nnw.png)
+![Phase 2 — Carrier Wave Sync](https://i.imgur.com/jig2UtH.png)
 
 ---
 
